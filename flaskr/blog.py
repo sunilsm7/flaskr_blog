@@ -21,6 +21,29 @@ def index():
     return render_template('blog/index.html', posts=posts)
 
 
+@bp.route('/search', methods=['GET', 'POST'])
+def search():
+    query = request.args.get('query')
+    error = None
+    
+    if not query:
+        error = 'Please enter query to search'
+
+    if error is not None:
+        flash(error)
+    else:
+        db = get_db()
+        posts = db.execute(
+            'SELECT p.id, title, body, created, author_id, username'
+            ' FROM post p JOIN user u ON p.author_id = u.id'
+            ' WHERE title LIKE ?'
+            ' ORDER BY created DESC',('%' + query + '%',)
+        ).fetchall()
+        return render_template('blog/index.html', posts=posts)
+
+    return render_template('blog/index.html', query=query)
+
+
 @bp.route('/create', methods=['GET', 'POST']) 
 @login_required
 def create():
